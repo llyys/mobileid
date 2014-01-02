@@ -3,7 +3,7 @@ apply plugin: 'maven'
 
 group = 'com.codeborne'
 archivesBaseName = 'mobileid'
-version = '0.9.6-SNAPSHOT'
+version = '0.9.7-SNAPSHOT'
 sourceCompatibility = 1.5
 targetCompatibility = 1.5
 
@@ -43,8 +43,16 @@ compileJava.options.debugOptions.debugLevel = "source,lines,vars"
 dependencies {
   compile 'org.apache.axis:axis:1.4'
   compile 'org.apache.axis:axis-jaxrpc:1.4'
+  compile 'org.apache.commons:commons-io:1.3.2'
+  compile 'org.apache.commons:commons-lang3:3.1'
+  compile 'org.apache.commons:commons-compress:1.3'
+  compile 'commons-codec:commons-codec:1.8'
   compile 'commons-discovery:commons-discovery:0.4'
   compile 'wsdl4j:wsdl4j:1.6.2'
+  compile 'log4j:log4j:1.2.17'
+  compile files('lib/jdigidoc-3.8.0-BETA.653.jar')
+  compile files('lib/jdigidoc.cfg')
+
   testCompile 'junit:junit:4.10'
   testCompile 'org.hamcrest:hamcrest-all:1.1'
   testCompile 'org.mockito:mockito-all:1.9.0'
@@ -82,3 +90,7 @@ task wrapper(type: Wrapper) {
   scriptFile = './gradle'
 }
 
+//fixes Intellij IDEA dependencies not being updated when gradle deps updated.
+allprojects {
+    apply plugin: 'idea'
+}

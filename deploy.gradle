@@ -21,12 +21,12 @@ uploadArchives {
                name archivesBaseName
                packaging 'jar'
                description 'Java wrapper for Mobile-ID'
-               url 'https://github.com/codeborne/mobileid'
+               url 'https://github.com/llyys/mobileid'
 
                scm {
-                   url 'scm:git@github.com:codeborne/mobileid.git'
-                   connection 'scm:git@github.com:codeborne/mobileid.git'
-                   developerConnection 'scm:git@github.com:codeborne/mobileid.git'
+                   url 'scm:git@github.com:llyys/mobileid.git'
+                   connection 'scm:git@github.com:llyys/mobileid.git'
+                   developerConnection 'scm:git@github.com:llyys/mobileid.git'
                }
 
                licenses {
@@ -45,6 +45,10 @@ uploadArchives {
                    developer {
                        id 'asolntsev'
                        name 'Andrei Solntsev'
+                   }
+                   developer {
+                       id 'llyys'
+                       name 'Lauri Lyys'
                    }
                }
            }

@@ -10,3 +10,7 @@
 /build/test-results
 /build/tmp
 /build/libs-test
+
+/build/docs/javadoc
+
+/build/libs

@@ -31,6 +31,7 @@ public class MobileIDAuthenticator {
 
   DigiDocServicePortType service;
 
+
   public MobileIDAuthenticator() {
   }
 
