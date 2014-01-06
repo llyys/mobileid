@@ -1,29 +1,28 @@
 package com.codeborne.security.signature;
 
 import com.codeborne.security.AuthenticationException;
-import com.codeborne.security.digidoc.*;
+import com.codeborne.security.digidoc.DigiDocServicePortType;
+import com.codeborne.security.digidoc.DigiDocService_Service;
+import com.codeborne.security.digidoc.DigiDocService_ServiceLocator;
 import com.codeborne.security.digidoc.holders.SignedDocInfoHolder;
-import ee.sk.digidoc.DataFile;
-import ee.sk.digidoc.DigiDocException;
-import ee.sk.digidoc.SignedDoc;
-import ee.sk.digidoc.factory.DigiDocFactory;
-import ee.sk.digidoc.factory.SAXDigiDocFactory;
-import ee.sk.utils.ConfigManager;
-import org.apache.axis.Message;
-import org.apache.axis.description.TypeDesc;
-import org.apache.axis.encoding.SerializationContext;
-import org.apache.axis.encoding.ser.BeanSerializer;
+import com.codeborne.security.digidoc.mapping.SignedDoc;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
-import javax.xml.XMLConstants;
+import javax.xml.bind.JAXBException;
 import javax.xml.rpc.ServiceException;
 import javax.xml.rpc.holders.IntHolder;
 import javax.xml.rpc.holders.StringHolder;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.rmi.RemoteException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -33,18 +32,8 @@ import static com.codeborne.security.AuthenticationException.Code.valueOf;
 
 public abstract class Signer {
 
-    public static final String CONTENT_EMBEDDED = "EMBEDDED";
-    public static final String CONTENT_EMBEDDED_BASE64 = "EMBEDDED_BASE64";
-    public static final String CONTENT_BINARY = "BINARY";
-    public static final String CONTENT_HASHCODE = "HASHCODE";
     public final String serviceName;
-
-
     public DigiDocServicePortType service;
-
-    public static final String FORMAT_DIGIDOC_XML = "DIGIDOC-XML";
-    public static final String VERSION_1_3 = "1.3";
-
 
     public Signer(String digidocServiceURL, String serviceName) throws MalformedURLException {
         setDigidocServiceURL(new URL(digidocServiceURL));
@@ -69,47 +58,45 @@ public abstract class Signer {
      * As a result of the StartSession request also a created session identifier
      * is returned, what should be used in the headers of following requests.
      */
-    public SignatureSession startSession(List<File> files) throws IOException, DigiDocException {
+    public SignatureSession startSession(List<File> files) throws Exception {
+        return startSession(files, false);
+    }
 
-        ConfigManager.init("jar://JDigiDoc.cfg");
-        SignedDoc sdoc = new SignedDoc(SignedDoc.FORMAT_DIGIDOC_XML, SignedDoc.VERSION_1_3);
-        sdoc.setProfile(SignedDoc.BDOC_PROFILE_TM);
-        DataFileInfo[] dataFiles= new DataFileInfo[files.size()];
+    /**
+     *
+     * @param files
+     * @param compact if true, then actual file content is not sent to the service. So after successful signing user must add file again to appendDatafileDigestContent method
+     * @return
+     * @throws Exception
+     */
+    public SignatureSession startSession(List<File> files, boolean compact) throws Exception {
+
+        SignedDoc sDoc=new SignedDoc();
 
         for (int i = 0; i < files.size(); i++) {
             File f = files.get(i);
-            String mimeType=URLConnection.guessContentTypeFromName(f.getName());
-            DataFile dataFile = sdoc.addDataFile(f, mimeType, DataFile.CONTENT_EMBEDDED_BASE64);
-            FileInputStream fis = new FileInputStream(f);
-            byte fileContent[] = new byte[(int) f.length()];
-            fis.read(fileContent);
-            dataFile.setBase64Body(fileContent);
-            /*
-            //TODO: calculate to use hash, so you don't send whole base64 document over the wire
-            String dataRaw=dataFile.toString();
-            ByteArrayInputStream bais=new ByteArrayInputStream(dataFile.toXML());
-            dataFile.calcHashes(bais);
-            */
+            com.codeborne.security.digidoc.mapping.DataFile dataFile = sDoc.addEmbeddedFile(f);
+
+            if(compact)
+                dataFile.calculateHash();
         }
 
         StringHolder status = new StringHolder();
         IntHolder sessionCode = new IntHolder();
         SignedDocInfoHolder signedDocInfo=new SignedDocInfoHolder();
 
-        //It’s not allowed to send to the service a data of the SigDocXML and the Datafile at the same time, as they exclude each other.
         try {
-            String input = sdoc.toXML();
-            input=input.replace("</DataFile>", "\n</DataFile>");
-//            String docXML = StringEscapeUtils.escapeXml(input);
-            String docXML = input;//StringEscapeUtils.escapeXml(input);
+            String docXML = sDoc.toXml();
             service.startSession("", docXML, true, null, status, sessionCode, signedDocInfo);
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
 
         } catch (RemoteException e) {
             throw new AuthenticationException(e);
+        } catch (JAXBException e) {
+            throw new Exception(e);
         }
-        return new SignatureSession(sessionCode.value, signedDocInfo.value, sdoc);
+        return new SignatureSession(sessionCode.value, signedDocInfo.value);
 
     }
 
@@ -139,9 +126,9 @@ public abstract class Signer {
      * request. If there’s a will
      * to recieve the document information in structured format in addition to signed
      * document, the GetSignedDocInfo request should be used.
-     * @return XML Digidoc String that can be saved as ready signature
+     * @return SignedDoc
      */
-    public SignedDoc getSignedDoc(SignatureSession session) throws DigiDocException {
+    public String getSignedDoc(SignatureSession session) throws Exception {
         try {
             StringHolder status = new StringHolder();
             StringHolder signedDocData = new StringHolder();
@@ -149,11 +136,9 @@ public abstract class Signer {
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
 
-            //The content of the document is in HTMLencoded format.
+            //The content of the document may be in HTMLencoded format.
             String result = StringEscapeUtils.unescapeHtml4(signedDocData.value);
-            DigiDocFactory factory = new SAXDigiDocFactory();
-            return factory.readSignedDoc(result);
-
+            return result;
 
         } catch (RemoteException e) {
             throw new AuthenticationException(e);
@@ -182,59 +167,48 @@ public abstract class Signer {
         }
     }
 
-/*
-    public static String serialize(SignedDocInfo doc) throws IOException {
-        BeanSerializer serializer = (BeanSerializer) SignedDocInfo.getSerializer("", SignedDocInfo.class, null);
+    /**
+     * This mehtod is required if used StartSession widht compact version.
+     * It means that after signing there acutally are no file content in it. So to add this you must reappend all files
+     * in data container. To iterate how many DataFiles are in container, it's good to iterate over SignatureSession.
+     * @param xml
+     * @param files - all signing process files now will add content to it
+     * @return
+     * @throws JDOMException
+     * @throws IOException
+     */
+    public static String appendDatafileDigestContent(String xml, List<File> files) throws JDOMException, IOException {
+        SAXBuilder builder = new SAXBuilder();
+        Document doc = builder.build(IOUtils.toInputStream(xml));
+        Element rootNode = doc.getRootElement();
 
-        Writer writer = new StringWriter();
-        TypeDesc typeDesc = SignedDocInfo.getTypeDesc();
-
-        SerializationContext context= new SerializationContext(writer);
-        context.setWriteXMLType(new javax.xml.namespace.QName(XMLConstants.W3C_XML_SCHEMA_NS_URI, "", ""));
-//        context.setPretty(true);
-        serializer.serialize(typeDesc.getXmlType(), null, doc, context);
-        return writer.toString();
-    }
-
-    public static SignedDocInfo deSerialize(String xml){
-
-        Object result = null;
-       // String SOAP_START = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"><soapenv:Header /><soapenv:Body>";
-        String SOAP_START_XSI = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><soapenv:Header /><soapenv:Body>";
-        String SOAP_END = "</soapenv:Body></soapenv:Envelope>";
-        xml=xml.replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "");
-        Message message = new Message(SOAP_START_XSI + xml + SOAP_END);
-        try {
-            result = message.getSOAPEnvelope().getFirstBody().getObjectValue(SignedDocInfo.class);
-            return (SignedDocInfo) result;
-        } catch (Exception e) {
-            e.printStackTrace();
+        List<Element> dataFiles = rootNode.getChildren();
+        for (Element dataFile : dataFiles){
+            for(File file:files)
+            {
+                if(dataFile.getName().equalsIgnoreCase("DataFile") && dataFile.getAttributeValue("Filename").equalsIgnoreCase(file.getName())) {
+                    if(dataFile.getContentSize()==0) {
+                        FileInputStream fis = null;
+                        try {
+                            fis = new FileInputStream(file);
+                            byte fileContent[] = new byte[(int) file.length()];
+                            fis.read(fileContent);
+                            dataFile.addContent(new String(Base64.encodeBase64(fileContent))+"\n");
+                        }
+                        finally {
+                            fis.close();
+                        }
+                    }
+                }
+            }
         }
 
+        XMLOutputter xmlOutput = new XMLOutputter();
 
-
-        return null;
-
-
+        xmlOutput.setFormat(Format.getPrettyFormat());
+        StringWriter sw = new StringWriter();
+        xmlOutput.output(doc, sw);
+        return sw.toString();
     }
 
-    public static SignedDocInfo createDigidocContainer() {
-        SignedDocInfo doc= new SignedDocInfo();
-        doc.setFormat(FORMAT_DIGIDOC_XML);
-        doc.setVersion(VERSION_1_3);
-        return doc;
-    }
-
-    public static String CalculateBase64(File testFile){
-        FileInputStream fileInputStream= null;
-        try {
-            fileInputStream = new FileInputStream(testFile);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            org.apache.commons.io.IOUtils.copy(fileInputStream, baos);
-            return new String(Base64.encodeBase64(baos.toByteArray()));
-        } catch (IOException e) {
-            return null;
-        }
-    }
-*/
 }

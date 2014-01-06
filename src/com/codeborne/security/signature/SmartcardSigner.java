@@ -5,6 +5,7 @@ import com.codeborne.security.digidoc.SignedDocInfo;
 import com.codeborne.security.digidoc.holders.SignedDocInfoHolder;
 
 import javax.xml.rpc.holders.StringHolder;
+import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 
@@ -40,7 +41,10 @@ public class SmartcardSigner extends Signer{
             StringHolder signatureId = new StringHolder();
             StringHolder signedDocData = new StringHolder();
             StringHolder signedInfoDigest = new StringHolder();
-            service.prepareSignature(session.sessCode, signersCertificate, signersTokenId, role, city, state, postalCode, country, signingProfile, status, signatureId, signedInfoDigest);
+
+            String certHex=SmartcardSigner.bin2hex(signersCertificate.getBytes());//convert to hex cert format
+
+            service.prepareSignature(session.sessCode, certHex, signersTokenId, role, city, state, postalCode, country, signingProfile, status, signatureId, signedInfoDigest);
 
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
@@ -62,13 +66,15 @@ public class SmartcardSigner extends Signer{
      * validity confirmation is taken.
      *
      * @param session
-     * @param signatureValue value of the signature (signed hash) as a HEX string.    The signing software (ActiveX or Java Applet) returns the value.
      * @return
      */
-    public SignedDocInfo FinalizeSignature(SignatureSession session){
+    public String FinalizeSignature(SignatureSession session, String signature) throws Exception {
         try {
             StringHolder status = new StringHolder();
-            StringHolder signatureId = new StringHolder();
+            if(session.signatureId==null)
+                session.signatureId="S"+(session.signedDocInfo.getSignatureInfo()==null?0:session.signedDocInfo.getSignatureInfo().length);
+
+            session.signature=signature;
             SignedDocInfoHolder signedDocData = new SignedDocInfoHolder();
 
             service.finalizeSignature(session.sessCode, session.signatureId, session.signature, status, signedDocData);
@@ -76,12 +82,56 @@ public class SmartcardSigner extends Signer{
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
 
-            session.challengeID=signatureId.value;
-            return signedDocData.value;
+            return getSignedDoc(session);
+            //session.challengeID=signatureId.value;
+            //return signedDocData.value;
 
         } catch (RemoteException e) {
             throw new AuthenticationException(e);
         }
+    }
+
+    /**
+     * Converts a hex string to byte array
+     * @param hexString input data
+     * @return byte array
+     */
+    public static byte[] hex2bin(String hexString)
+    {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            for(int i = 0; (hexString != null) &&
+                    (i < hexString.length()); i += 2) {
+                String tmp = hexString.substring(i, i+2);
+                Integer x = new Integer(Integer.parseInt(tmp, 16));
+                bos.write(x.byteValue());
+            }
+        } catch(Exception ex) {
+            System.err.println("Error converting hex string: " + ex);
+        }
+        return bos.toByteArray();
+    }
+
+    /**
+     * Converts a byte array to hex string
+     * @param arr byte array input data
+     * @return hex string
+     */
+    public static String bin2hex(byte[] arr)
+    {
+        StringBuffer sb = new StringBuffer();
+        for(int i = 0; i < arr.length; i++) {
+            String str = Integer.toHexString((int)arr[i]);
+            if(str.length() == 2)
+                sb.append(str);
+            if(str.length() < 2) {
+                sb.append("0");
+                sb.append(str);
+            }
+            if(str.length() > 2)
+                sb.append(str.substring(str.length()-2));
+        }
+        return sb.toString();
     }
 
 }
