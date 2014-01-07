@@ -5,13 +5,7 @@ import com.codeborne.security.signature.MobileIDSigner;
 import com.codeborne.security.signature.SignatureSession;
 import com.codeborne.security.signature.Signer;
 import com.codeborne.security.signature.SmartcardSigner;
-import ee.sk.digidoc.DigiDocException;
-import ee.sk.digidoc.SignedDoc;
-import ee.sk.digidoc.factory.DigiDocFactory;
-import ee.sk.digidoc.factory.SAXDigiDocFactory;
-import ee.sk.utils.ConfigManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jdom2.JDOMException;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,19 +13,17 @@ import org.junit.Test;
 import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.security.Provider;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
-
-public class SignerTests {
-    String path = SignerTests.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-    @Before
+/**
+ * These integration tests are meant to execute manually, before executing tests you must add missing files in test folder
+ */
+public class SignerIntegrationTests {
+    String path = SignerIntegrationTests.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+//    @Before
     public void setUp(){
 
         File keystore = new File(path, "keystore.jks");
@@ -62,7 +54,7 @@ public class SignerTests {
         }
     }
 
-    @Test
+    //@Test
     public void canExecuteSmartCardSigningIntegration() throws Exception {
         File testFile = new File(path, "test.txt");
         SmartcardSigner signer =null;
@@ -97,28 +89,6 @@ public class SignerTests {
     }
 
    // @Test
-   /* public void canDeserializeDocumentToDigidoc() throws IOException, DigiDocException, ClassNotFoundException, IllegalAccessException, InstantiationException {
-        String res = null;
-        ConfigManager.init(path+"jdigidoc.cfg");
-            res = FileUtils.readFileToString(new File(path, "testDigidoc.xml"));
-            assertNotNull(res);
-
-            //deserialization requires security provider.
-            String digidoc_security_provider = ConfigManager.instance().getProperty("DIGIDOC_SECURITY_PROVIDER");
-            Provider prv = (Provider)Class.forName(digidoc_security_provider).newInstance();
-            Security.addProvider(prv);//to fix No boncy castle provider
-
-            DigiDocFactory factory = new SAXDigiDocFactory();
-            InputStream is=IOUtils.toInputStream(res);
-
-            SignedDoc result = factory.readDigiDocFromStream(is);
-
-            assertNotNull(result);
-
-
-    }*/
-
-    @Test
     public void canGenerateSignedDocWidthCompactDataNodes() throws JAXBException, IOException, JDOMException {
         com.codeborne.security.digidoc.mapping.SignedDoc doc = new com.codeborne.security.digidoc.mapping.SignedDoc();
         File testFile = new File(path, "test.txt");
@@ -135,14 +105,11 @@ public class SignerTests {
         assertEquals("", dataFile.getContentValue());
         String result=doc.toXml();
         assertNotNull(result);
+        List<File> files = new ArrayList<File>();
+        files.add(testFile);
         //this will be needed after downloading document from digidoc service and adding Base64 content to it.
-        String result2=Signer.appendDatafileDigestContent(result, testFile);
-
+        String result2=Signer.appendDatafileDigestContent(result, files);
         assertNotSame(result, result2);
-
-
-
-
     }
 
 }

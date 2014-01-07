@@ -1,8 +1,6 @@
 package com.codeborne.security.digidoc.mapping;
 
-import com.sun.xml.internal.bind.marshaller.NamespacePrefixMapper;
 import org.apache.commons.codec.binary.Base64;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;

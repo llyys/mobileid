@@ -3,7 +3,7 @@ apply plugin: 'maven'
 
 group = 'com.codeborne'
 archivesBaseName = 'mobileid'
-version = '0.9.7-SNAPSHOT'
+version = '1.0.0'
 sourceCompatibility = 1.5
 targetCompatibility = 1.5
 
