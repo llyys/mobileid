@@ -1,9 +1,10 @@
-package com.codeborne.security.mobileid;
+package com.codeborne.security.authenticator;
 
 import com.codeborne.security.AuthenticationException;
 import com.codeborne.security.digidoc.DigiDocServicePortType;
 import com.codeborne.security.digidoc.DigiDocService_Service;
 import com.codeborne.security.digidoc.DigiDocService_ServiceLocator;
+import com.codeborne.security.mobileid.MobileIDSession;
 
 import javax.xml.rpc.ServiceException;
 import javax.xml.rpc.holders.IntHolder;
@@ -18,7 +19,7 @@ import static com.codeborne.security.AuthenticationException.Code.*;
  * Authenticates with Mobile-ID.<br>
  * Can be used as a preconfigured singleton (eg Spring bean).<br>
  * <p>Use {@link #startLogin} to initiate the login session and display challenge to the user,
- * then {@link #waitForLogin(MobileIDSession)} to wait for the authentication to complete.</p>
+ * then {@link #waitForLogin(com.codeborne.security.mobileid.MobileIDSession)} to wait for the authentication to complete.</p>
  * <p>Various setters can be used to configure the behaviour.</p>
  */
 public class MobileIDAuthenticator {
@@ -29,7 +30,7 @@ public class MobileIDAuthenticator {
   private int pollIntervalMs = 3000;
   private final String messagingMode = "asynchClientServer";
 
-  DigiDocServicePortType service;
+  public DigiDocServicePortType service;
 
 
   public MobileIDAuthenticator() {
@@ -198,7 +199,7 @@ public class MobileIDAuthenticator {
     return status;
   }
 
-  boolean sleep(int sleepTimeMilliseconds) {
+  public boolean sleep(int sleepTimeMilliseconds) {
     try {
       Thread.sleep(sleepTimeMilliseconds);
       return true;

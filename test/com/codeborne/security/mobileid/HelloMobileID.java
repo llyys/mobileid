@@ -1,13 +1,13 @@
 package com.codeborne.security.mobileid;
 
 import com.codeborne.security.AuthenticationException;
+import com.codeborne.security.authenticator.MobileIDAuthenticator;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
-import static org.junit.Assert.*;
 
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
 

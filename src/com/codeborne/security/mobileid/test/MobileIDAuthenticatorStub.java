@@ -1,7 +1,7 @@
 package com.codeborne.security.mobileid.test;
 
 import com.codeborne.security.AuthenticationException;
-import com.codeborne.security.mobileid.MobileIDAuthenticator;
+import com.codeborne.security.authenticator.MobileIDAuthenticator;
 import com.codeborne.security.mobileid.MobileIDSession;
 
 import static java.lang.Integer.parseInt;

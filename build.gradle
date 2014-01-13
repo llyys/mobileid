@@ -51,6 +51,7 @@ dependencies {
   compile 'wsdl4j:wsdl4j:1.6.2'
   compile 'log4j:log4j:1.2.17'
   compile 'org.jdom:jdom2:2.0.5'
+  compile 'javax.servlet:servlet-api:2.5'
 
   testCompile 'junit:junit:4.10'
   testCompile 'org.hamcrest:hamcrest-all:1.1'

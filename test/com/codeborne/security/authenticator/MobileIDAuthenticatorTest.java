@@ -1,8 +1,9 @@
-package com.codeborne.security.mobileid;
+package com.codeborne.security.authenticator;
 
 import com.codeborne.security.AuthenticationException;
 import com.codeborne.security.AuthenticationException.Code;
 import com.codeborne.security.digidoc.DigiDocServicePortType;
+import com.codeborne.security.mobileid.MobileIDSession;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -11,11 +12,16 @@ import javax.xml.rpc.holders.IntHolder;
 import javax.xml.rpc.holders.StringHolder;
 import java.rmi.RemoteException;
 
-import static com.codeborne.security.AuthenticationException.Code.*;
+import static com.codeborne.security.AuthenticationException.Code.OUTSTANDING_TRANSACTION;
+import static com.codeborne.security.AuthenticationException.Code.USER_AUTHENTICATED;
 import static java.lang.String.valueOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 public class MobileIDAuthenticatorTest {
