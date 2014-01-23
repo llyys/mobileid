@@ -21,6 +21,7 @@ You can also use Maven/Ivy/Gradle/SBT or your favorite dependency manager that c
 
   [com.codeborne :: mobileid](https://raw.github.com/llyys/mobileid/tree/master/mvn)
 
+
 Setting up tomcat webserver certificates 
 =====
 
@@ -62,7 +63,22 @@ Now create a keystorefile witdh keytool
     $ keytool -trustcacerts -importcert -file "EE-Certification-Centre-Root-CA.crt" -keystore keystore.jks -alias EE-Certification-Centre-Root-CA
     $ keytool -trustcacerts -importcert -file "ESTEID-SK-2011.crt" -keystore keystore.jks -alias ESTEID-SK-2011
 
-###Configure tomcat
+Setting up certs for accessing https://digidocservice.sk.ee/
+=====
+
+To access a https service via java you need to add https authentication certificate to keystore. 
+First download certificate from the server
+
+    $ openssl s_client -connect digidocservice.sk.ee:443 -showcerts |openssl x509 -outform PEM >digidocservice.pem
+NB! this openssl process will not close after cert reading, so just press CTRL-C key and see if outputted digidocservice.pem file is not empty but 
+has a text containing ***PEM*** -----BEGIN CERTIFICATE-----... and ends width -----END CERTIFICATE-----
+
+Now add this https access certificate to java keystore width following command 
+
+    $ keytool -trustcacerts -importcert -file "digidocservice.pem" -keystore keystore.jks -alias digidocservice
+
+
+###Configure tomcat to enable ID-Card authorization.
 
 go to the folder where you installed tomcat and open conf\server.xml file and copy just created **keystore.jks** to the same folder where is server.xml
 edit server.xml 
@@ -74,33 +90,17 @@ edit server.xml
     truststoreFile="conf/keystore.jks" truststorePass="password" 
     clientAuth="true" sslProtocol="TLS" /> 
 
-If you want to use client-certificate authentication only for certain webapps (or paths), you need to configure the connector with a truststore, but leave clientAuth="false".
+If you want to use client-certificate authentication only for certain webapps (or paths), you need to configure the connector with a truststore.
+***You should not use certificate renogiation by setting clientAuth="want" this is not properly supported so just don't waste your time on this.***
 
-Then, in your WEB-INF/web.xml, you need to configure CLIENT-CERT authentication. This will use re-negotiation to ask for a client certificate when necessary. The configuration looks like this:
+but when you need to use other authorizatoin methods then do this via another connector port something like 443
 
-    <web-app>
-        <display-name>My Webapp</display-name>
-        <security-constraint>
-            <web-resource-collection>
-                <web-resource-name>App</web-resource-name>
-                <url-pattern>/</url-pattern>
-            </web-resource-collection>
-            <auth-constraint>
-                <role-name>cert</role-name>
-            </auth-constraint>
-            <user-data-constraint>
-                <transport-guarantee>CONFIDENTIAL</transport-guarantee>
-            </user-data-constraint>
-        </security-constraint>
-    
-        <login-config>
-            <auth-method>CLIENT-CERT</auth-method>
-        </login-config>
-    
-        <security-role>
-            <role-name>cert</role-name>
-        </security-role>
-    </web-app>
+    <Connector port="443" protocol="HTTP/1.1" SSLEnabled="true" 
+    maxThreads="150" scheme="https" secure="true" 
+    keystoreFile="conf/keystore.jks" keystorePass="password" keyAlias="mydomain" 
+    truststoreFile="conf/keystore.jks" truststorePass="password" 
+    clientAuth="false" sslProtocol="TLS" /> 
+
 
 Usage
 =====

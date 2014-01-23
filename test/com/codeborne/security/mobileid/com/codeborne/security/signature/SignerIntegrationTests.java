@@ -61,7 +61,7 @@ public class SignerIntegrationTests {
         SignatureSession session=null;
         try{
 
-            signer = new SmartcardSigner("https://www.openxades.org:9443/", "Testimine");
+            signer = new SmartcardSigner("https://digidocservice.sk.ee/", "Testimine");
 
             List<File> files=new ArrayList<File>();
             files.add(testFile);
