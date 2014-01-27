@@ -112,4 +112,23 @@ public class SignerIntegrationTests {
         assertNotSame(result, result2);
     }
 
+    @Test
+    public void canGenerateStringToHex(){
+        String test="Test text to be converted as HEX";
+        assertEquals("54657374207465787420746f20626520636f6e76657274656420617320484558", SmartcardSigner.bin2hex(test.getBytes()));
+    }
+
+    @Test
+    public void canConvertDerToPem() throws IOException {
+        //PEM certificate is base64 encoded string and it need to be converted to binary DER
+        File testFile = new File(path, "cert.pem");
+        File assertFile = new File(path, "cert.der");
+        String cert=FileUtils.readFileToString(testFile);
+        byte[] derResult= SmartcardSigner.convertPemToDer(cert);
+        byte[] der=FileUtils.readFileToByteArray(assertFile);
+        assertEquals(derResult.length, der.length);
+        assertArrayEquals(derResult, der);
+
+    }
+
 }

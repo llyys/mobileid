@@ -3,6 +3,8 @@ package com.codeborne.security.signature;
 import com.codeborne.security.AuthenticationException;
 import com.codeborne.security.digidoc.SignedDocInfo;
 import com.codeborne.security.digidoc.holders.SignedDocInfoHolder;
+import org.apache.commons.codec.binary.Base64;
+import sun.misc.Regexp;
 
 import javax.xml.rpc.holders.StringHolder;
 import java.io.ByteArrayOutputStream;
@@ -41,8 +43,8 @@ public class SmartcardSigner extends Signer{
             StringHolder signatureId = new StringHolder();
             StringHolder signedDocData = new StringHolder();
             StringHolder signedInfoDigest = new StringHolder();
-
-            String certHex=SmartcardSigner.bin2hex(signersCertificate.getBytes());//convert to hex cert format
+            byte[] der=SmartcardSigner.convertPemToDer(signersCertificate);//PEM (base64) format certificate converted DER (Binary) format.
+            String certHex=SmartcardSigner.bin2hex(der);//convert to hex cert format
 
             service.prepareSignature(session.sessCode, certHex, signersTokenId, role, city, state, postalCode, country, signingProfile, status, signatureId, signedInfoDigest);
 
@@ -117,21 +119,21 @@ public class SmartcardSigner extends Signer{
      * @param arr byte array input data
      * @return hex string
      */
-    public static String bin2hex(byte[] arr)
+    private static char[] hexArray = "0123456789abcdef".toCharArray();
+    public static String bin2hex(byte[] bytes)
     {
-        StringBuffer sb = new StringBuffer();
-        for(int i = 0; i < arr.length; i++) {
-            String str = Integer.toHexString((int)arr[i]);
-            if(str.length() == 2)
-                sb.append(str);
-            if(str.length() < 2) {
-                sb.append("0");
-                sb.append(str);
-            }
-            if(str.length() > 2)
-                sb.append(str.substring(str.length()-2));
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
-        return sb.toString();
+        return new String(hexChars);
     }
 
+    public static byte[] convertPemToDer(String cert) {
+        cert=cert.replaceAll("-----BEGIN CERTIFICATE-----", "").replaceAll("-----END CERTIFICATE-----", "");
+        cert=cert.replaceAll("\n|\r", "");
+        return Base64.decodeBase64(cert.getBytes());
+    }
 }
