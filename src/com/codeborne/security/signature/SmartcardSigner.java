@@ -94,27 +94,6 @@ public class SmartcardSigner extends Signer{
     }
 
     /**
-     * Converts a hex string to byte array
-     * @param hexString input data
-     * @return byte array
-     */
-    public static byte[] hex2bin(String hexString)
-    {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            for(int i = 0; (hexString != null) &&
-                    (i < hexString.length()); i += 2) {
-                String tmp = hexString.substring(i, i+2);
-                Integer x = new Integer(Integer.parseInt(tmp, 16));
-                bos.write(x.byteValue());
-            }
-        } catch(Exception ex) {
-            System.err.println("Error converting hex string: " + ex);
-        }
-        return bos.toByteArray();
-    }
-
-    /**
      * Converts a byte array to hex string
      * @param arr byte array input data
      * @return hex string

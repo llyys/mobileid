@@ -128,6 +128,8 @@ public class SignerIntegrationTests {
         byte[] der=FileUtils.readFileToByteArray(assertFile);
         assertEquals(derResult.length, der.length);
         assertArrayEquals(derResult, der);
+        String hex = SmartcardSigner.bin2hex(derResult);
+        assertNotNull(hex);
 
     }
 
