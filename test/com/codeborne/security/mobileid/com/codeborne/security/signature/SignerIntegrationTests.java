@@ -118,7 +118,7 @@ public class SignerIntegrationTests {
         assertEquals("54657374207465787420746f20626520636f6e76657274656420617320484558", SmartcardSigner.bin2hex(test.getBytes()));
     }
 
-    @Test
+   // @Test
     public void canConvertDerToPem() throws IOException {
         //PEM certificate is base64 encoded string and it need to be converted to binary DER
         File testFile = new File(path, "cert.pem");

@@ -1,13 +1,10 @@
 package com.codeborne.security.signature;
 
 import com.codeborne.security.AuthenticationException;
-import com.codeborne.security.digidoc.SignedDocInfo;
 import com.codeborne.security.digidoc.holders.SignedDocInfoHolder;
 import org.apache.commons.codec.binary.Base64;
-import sun.misc.Regexp;
 
 import javax.xml.rpc.holders.StringHolder;
-import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 

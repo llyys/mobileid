@@ -1,11 +1,7 @@
 package com.codeborne.security.authenticator;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import sun.security.provider.X509Factory;
-
 import javax.security.cert.CertificateException;
-import javax.security.cert.X509Certificate;
 import javax.servlet.http.HttpServletRequest;
 
 public class SmartCardAuthenticator {
