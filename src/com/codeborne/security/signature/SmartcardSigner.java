@@ -81,10 +81,10 @@ public class SmartcardSigner extends Signer{
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
 
-            return getSignedDoc(session);
-            //session.challengeID=signatureId.value;
-            //return signedDocData.value;
-
+            String signedDoc = getSignedDoc(session);
+            if(session.isCompact)
+                return Signer.appendDatafileDigestContent(signedDoc, session.files);
+            return signedDoc;
         } catch (RemoteException e) {
             throw new AuthenticationException(e);
         }

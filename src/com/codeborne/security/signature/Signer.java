@@ -5,10 +5,12 @@ import com.codeborne.security.digidoc.DigiDocServicePortType;
 import com.codeborne.security.digidoc.DigiDocService_Service;
 import com.codeborne.security.digidoc.DigiDocService_ServiceLocator;
 import com.codeborne.security.digidoc.holders.SignedDocInfoHolder;
+import com.codeborne.security.digidoc.mapping.DataFile;
 import com.codeborne.security.digidoc.mapping.SignedDoc;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -96,7 +98,10 @@ public abstract class Signer {
         } catch (JAXBException e) {
             throw new Exception(e);
         }
-        return new SignatureSession(sessionCode.value, signedDocInfo.value);
+        SignatureSession session = new SignatureSession(sessionCode.value, signedDocInfo.value);
+        session.isCompact=compact;
+        session.files=files;
+        return session;
 
     }
 
@@ -194,6 +199,8 @@ public abstract class Signer {
                             byte fileContent[] = new byte[(int) file.length()];
                             fis.read(fileContent);
                             dataFile.addContent(new String(Base64.encodeBase64(fileContent))+"\n");
+                            Attribute contentType = dataFile.getAttribute("ContentType");
+                            contentType.setValue(DataFile.CONTENT_EMBEDDED_BASE64);//add also back attribute to embedded base.
                         }
                         finally {
                             fis.close();

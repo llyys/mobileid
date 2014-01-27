@@ -65,7 +65,7 @@ public class SignerIntegrationTests {
 
             List<File> files=new ArrayList<File>();
             files.add(testFile);
-            session = signer.startSession(files);
+            session = signer.startSession(files, true);
             File certFile=new File(path, "cert.txt");
 
             String cert=FileUtils.readFileToString(certFile);
