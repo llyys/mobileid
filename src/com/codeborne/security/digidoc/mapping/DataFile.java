@@ -25,6 +25,9 @@ public class DataFile implements Serializable {
     public static final String CONTENT_BINARY = "BINARY";
     public static final String CONTENT_HASHCODE = "HASHCODE";
 
+    @XmlAttribute(name = "xmlns")
+    private String xmlns="http://www.sk.ee/DigiDoc/v1.3.0#";
+
     @XmlAttribute(name = "ContentType")
     private String contentType;
 
@@ -104,7 +107,7 @@ public class DataFile implements Serializable {
         try {
             String xml=this.toXml();
             String hash=Signer.calculateMessageDigest("SHA-1", xml);
-            digestType="SHA1";
+            digestType="sha1";
             digestValue=hash;
             setContentType(CONTENT_HASHCODE);
             contentValue="";//content will be cleared when digestValue exists. After finalizing we must put content value back to document via dom manipulation

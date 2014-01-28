@@ -14,3 +14,4 @@
 /build/docs/javadoc
 
 /build/libs
+/test/test.properties

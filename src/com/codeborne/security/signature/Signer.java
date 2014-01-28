@@ -89,6 +89,7 @@ public abstract class Signer {
 
         try {
             String docXML = sDoc.toXml();
+            //docXML=docXML.replaceAll("<", "&lt;").replaceAll(">", "&gt;"); //according to documentation there should be xml
             service.startSession("", docXML, true, null, status, sessionCode, signedDocInfo);
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
