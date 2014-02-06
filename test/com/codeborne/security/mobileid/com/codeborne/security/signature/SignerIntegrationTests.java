@@ -95,9 +95,11 @@ public class SignerIntegrationTests {
             File certFile=new File(path, "cert.pem");
 
             String cert=FileUtils.readFileToString(certFile);
+            byte[] der=SmartcardSigner.convertPemToDer(cert);//PEM (base64) format certificate converted DER (Binary) format.
+            String certHex=SmartcardSigner.bin2hex(der);//convert to hex cert format
 
 
-            String hash=signer.PrepareSignature(session, cert, "S0", "", "", "", "", "", "Testimine");
+            String hash=signer.PrepareSignature(session, certHex, "S0", "", "", "", "", "", "Testimine");
 
             String doc2 = signer.FinalizeSignature(session, "804EAB68865ED2DAF6BA11CE7D59D6E2244B16EF361C29A4E04421857D5B3148615A50D11C29100DBC3381826D9C888C83C4A9C6D35FF7A13B8F764C48349A9A3222BCAC6DC7FA4D836121457C4F0B9CAEFA7568C398AEE24839A7F192842F0E9A6DBFA1534E02E4A43C4F84E8BD58BD4324B1F46828F0DC3DAFFBEAD3B249D0");
             File file = new File(path, "testresult.ddoc");

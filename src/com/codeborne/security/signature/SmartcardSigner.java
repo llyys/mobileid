@@ -24,7 +24,7 @@ public class SmartcardSigner extends Signer{
      * software (ActiveX or Java Applet or JavaScript) of the user’s computer.
      *
      * @param session – An identifier of the active session.
-     * @param signersCertificate - signer’s certificate transferred to HEX string format (from binary (DER) format).
+     * @param certHex - signer’s certificate in HEX string format
      * @param signersTokenId - identifier of the private key’s slot on a smartcard.
      * @param role - The text of the role or resolution defined by the user
      * @param city - Name of the city, where it’s signed.
@@ -34,14 +34,12 @@ public class SmartcardSigner extends Signer{
      * @param signingProfile
      * @return – The hash to be signed as a hexadecimal string
      */
-    public String PrepareSignature(SignatureSession session, String signersCertificate, String signersTokenId, String role, String city, String state, String postalCode, String country, String signingProfile){
+    public String PrepareSignature(SignatureSession session, String certHex, String signersTokenId, String role, String city, String state, String postalCode, String country, String signingProfile){
         try {
             StringHolder status = new StringHolder();
             StringHolder signatureId = new StringHolder();
             StringHolder signedDocData = new StringHolder();
             StringHolder signedInfoDigest = new StringHolder();
-            byte[] der=SmartcardSigner.convertPemToDer(signersCertificate);//PEM (base64) format certificate converted DER (Binary) format.
-            String certHex=SmartcardSigner.bin2hex(der);//convert to hex cert format
 
             service.prepareSignature(session.sessCode, certHex, signersTokenId, role, city, state, postalCode, country, signingProfile, status, signatureId, signedInfoDigest);
 
