@@ -31,13 +31,12 @@ public class SignerIntegrationTests {
     public void setUp(){
 
         File keystore = new File(path, "keystore.jks");
-        if(keystore==null)
+        if(keystore==null || !keystore.exists())
         {
             hasRequiredFiles=false;
             return;
         }
-        if (!keystore.exists())
-            throw new RuntimeException("File not found: " + keystore.getAbsolutePath());
+
 
         System.setProperty("javax.net.ssl.trustStore", keystore.getAbsolutePath());
     }
