@@ -91,16 +91,19 @@ public class SignerIntegrationTests {
             List<File> files=new ArrayList<File>();
             files.add(testFile);
             session = signer.startSession(files, true);
-            File certFile=new File(path, "cert.pem");
+            File certFile=new File(path, "certHex.txt");
+            File certIdFile=new File(path, "certId.txt");
 
-            String cert=FileUtils.readFileToString(certFile);
-            byte[] der=SmartcardSigner.convertPemToDer(cert);//PEM (base64) format certificate converted DER (Binary) format.
+            String certHex=FileUtils.readFileToString(certFile);
+            String certId=FileUtils.readFileToString(certIdFile);
+           /* byte[] der=SmartcardSigner.convertPemToDer(cert);//PEM (base64) format certificate converted DER (Binary) format.
             String certHex=SmartcardSigner.bin2hex(der);//convert to hex cert format
+*/
+
+            String hash=signer.PrepareSignature(session, certHex, certId, "", "", "", "", "", "Testimine");
 
 
-            String hash=signer.PrepareSignature(session, certHex, "S0", "", "", "", "", "", "Testimine");
-
-            String doc2 = signer.FinalizeSignature(session, "804EAB68865ED2DAF6BA11CE7D59D6E2244B16EF361C29A4E04421857D5B3148615A50D11C29100DBC3381826D9C888C83C4A9C6D35FF7A13B8F764C48349A9A3222BCAC6DC7FA4D836121457C4F0B9CAEFA7568C398AEE24839A7F192842F0E9A6DBFA1534E02E4A43C4F84E8BD58BD4324B1F46828F0DC3DAFFBEAD3B249D0");
+            String doc2 = signer.FinalizeSignature(session, "6DAC32E70F209D6A39C76A65858EAAB69453D06D202C539624AF34C2D4FF43EDF9F038180018B2D85BB368D588ED50E34956400B07A1B9437AB16E0BAFC854814525E2222DE6EBF1EFB921C2F6E1BA437A97D1AB6DC71687B9C16760CA208B3AFF20BDA041AAEDBDA21164A47A39E691070D6FDEB67450083CABE33962217553");
             File file = new File(path, "testresult.ddoc");
             if(file.exists())
                 file.delete();
@@ -156,6 +159,10 @@ public class SignerIntegrationTests {
         assertArrayEquals(derResult, der);
         String hex = SmartcardSigner.bin2hex(derResult);
         assertNotNull(hex);
+
+        File certHexFile = new File(path, "certHex.txt");
+        String certHex=FileUtils.readFileToString(certHexFile);
+        assertEquals(hex.toUpperCase(), certHex);
 
     }
 
