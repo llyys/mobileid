@@ -1,6 +1,7 @@
 package com.codeborne.security.mobileid.com.codeborne.security.signature;
 
 import com.codeborne.security.digidoc.mapping.DataFile;
+import com.codeborne.security.digidoc.mapping.SignedDoc;
 import com.codeborne.security.signature.MobileIDSigner;
 import com.codeborne.security.signature.SignatureSession;
 import com.codeborne.security.signature.Signer;
@@ -96,14 +97,12 @@ public class SignerIntegrationTests {
 
             String certHex=FileUtils.readFileToString(certFile);
             String certId=FileUtils.readFileToString(certIdFile);
-           /* byte[] der=SmartcardSigner.convertPemToDer(cert);//PEM (base64) format certificate converted DER (Binary) format.
-            String certHex=SmartcardSigner.bin2hex(der);//convert to hex cert format
-*/
 
             String hash=signer.PrepareSignature(session, certHex, certId, "", "", "", "", "", "Testimine");
 
+            String signerResult = signerComponentMock(hash);
 
-            String doc2 = signer.FinalizeSignature(session, "6DAC32E70F209D6A39C76A65858EAAB69453D06D202C539624AF34C2D4FF43EDF9F038180018B2D85BB368D588ED50E34956400B07A1B9437AB16E0BAFC854814525E2222DE6EBF1EFB921C2F6E1BA437A97D1AB6DC71687B9C16760CA208B3AFF20BDA041AAEDBDA21164A47A39E691070D6FDEB67450083CABE33962217553");
+            String doc2 = signer.FinalizeSignature(session, signerResult);
             File file = new File(path, "testresult.ddoc");
             if(file.exists())
                 file.delete();
@@ -115,7 +114,14 @@ public class SignerIntegrationTests {
         }
     }
 
-
+    /**
+     * this mock will fake has signing into ready signature
+     * @param hash
+     * @return
+     */
+    private String signerComponentMock(String hash) {
+        return "6DAC32E70F209D6A39C76A65858EAAB69453D06D202C539624AF34C2D4FF43EDF9F038180018B2D85BB368D588ED50E34956400B07A1B9437AB16E0BAFC854814525E2222DE6EBF1EFB921C2F6E1BA437A97D1AB6DC71687B9C16760CA208B3AFF20BDA041AAEDBDA21164A47A39E691070D6FDEB67450083CABE33962217553";
+    }
 
 
     @Test
@@ -163,6 +169,18 @@ public class SignerIntegrationTests {
         File certHexFile = new File(path, "certHex.txt");
         String certHex=FileUtils.readFileToString(certHexFile);
         assertEquals(hex.toUpperCase(), certHex);
+
+    }
+    @Test
+    public void canGenerateCorrectBase64() throws IOException {
+        if (!hasRequiredFiles)
+            return;
+        //PEM certificate is base64 encoded string and it need to be converted to binary DER
+        File testFile = new File(path, "longDocTest.proc");
+        File assertFile = new File(path, "longDocResult.proc");
+        byte[] der=FileUtils.readFileToByteArray(testFile);
+        String result=SignedDoc.encodeToBase64(der);
+        assertEquals(result, FileUtils.readFileToString(assertFile));
 
     }
 

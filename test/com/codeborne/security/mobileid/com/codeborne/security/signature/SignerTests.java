@@ -1,6 +1,7 @@
 package com.codeborne.security.mobileid.com.codeborne.security.signature;
 
 import com.codeborne.security.digidoc.mapping.DataFile;
+import com.codeborne.security.digidoc.mapping.SignedDoc;
 import com.codeborne.security.signature.Signer;
 import com.codeborne.security.signature.SmartcardSigner;
 import org.junit.Test;
@@ -45,6 +46,16 @@ public class SignerTests {
     public void canGenerateStringToHex(){
         String test="Test text to be converted as HEX";
         assertEquals("54657374207465787420746f20626520636f6e76657274656420617320484558", SmartcardSigner.bin2hex(test.getBytes()));
+    }
+
+    @Test
+    public void isBase64SplittingCorrect(){
+        String test="PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjx4bWk6WE1JIHhtaTp2ZXJzaW9uPSIyLjAiIHhtbG5zOnhtaT0iaHR0cDovL3d3dy5vbWcub3JnL1hNSSIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy=";
+        String result=
+                "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjx4bWk6WE1J\r\n" +
+                "IHhtaTp2ZXJzaW9uPSIyLjAiIHhtbG5zOnhtaT0iaHR0cDovL3d3dy5vbWcub3Jn\r\n" +
+                "L1hNSSIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy=\r\n";
+        assertEquals(result, SignedDoc.encodeToChunckedBase64(test));
     }
 
 

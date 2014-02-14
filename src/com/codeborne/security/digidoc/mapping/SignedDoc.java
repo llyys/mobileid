@@ -67,7 +67,7 @@ public class SignedDoc implements Serializable {
             fis = new FileInputStream(file);
             byte fileContent[] = new byte[(int) file.length()];
             fis.read(fileContent);
-            e.setContentValue(new String(Base64.encodeBase64(fileContent))+"\n"); //documentation insist linebreak at the end of encoded content
+            e.setContentValue(encodeToBase64(fileContent)); //documentation insist linebreak at the end of encoded content
         }
         finally {
             if(fis!=null)
@@ -76,6 +76,24 @@ public class SignedDoc implements Serializable {
         }
         addDataFile(e);
         return e;
+    }
+
+    public static String encodeToBase64(byte[] fileContent) {
+        String result= new String(Base64.encodeBase64(fileContent));
+        return encodeToChunckedBase64(result);
+    }
+
+    public static String encodeToChunckedBase64(String result) {
+        StringBuilder sb=new StringBuilder();
+        int length = result.length();
+        for (int i=0; i<= length /64; i++){
+            int endIndex = (i + 1) * 64;
+            if(endIndex>length)
+                endIndex=length;
+            sb.append(result.substring(i*64, endIndex));
+            sb.append("\r\n");
+        }
+        return sb.toString();
     }
 
 

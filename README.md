@@ -113,3 +113,7 @@ Just use the public methods in [MobileIDAuthenticator](http://github.com/codebor
 
 See working example in [HelloMobileID.java](http://github.com/codeborne/mobileid/blob/master/test/com/codeborne/security/mobileid/HelloMobileID.java) - run the main() method.
 
+Test certificates
+=================
+If you see an signature exception as ERROR 126 OCSP responder is not trusted! No certificate for this responder in local certstore!, 
+you should install digidoc3 [SK test certificates](https://installer.id.ee/media/windows/Eesti_ID_kaart_testsertifikaadid.msi)

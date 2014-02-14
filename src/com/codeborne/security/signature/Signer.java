@@ -95,6 +95,7 @@ public abstract class Signer {
                 throw new AuthenticationException(valueOf(status.value));
 
         } catch (RemoteException e) {
+
             throw new AuthenticationException(e);
         } catch (JAXBException e) {
             throw new Exception(e);
@@ -143,8 +144,8 @@ public abstract class Signer {
                 throw new AuthenticationException(valueOf(status.value));
 
             //The content of the document may be in HTMLencoded format.
-            String result = StringEscapeUtils.unescapeHtml4(signedDocData.value);
-            return result;
+            //String result = StringEscapeUtils.unescapeHtml4(signedDocData.value);
+            return signedDocData.value;
 
         } catch (RemoteException e) {
             throw new AuthenticationException(e);
@@ -199,7 +200,9 @@ public abstract class Signer {
                             fis = new FileInputStream(file);
                             byte fileContent[] = new byte[(int) file.length()];
                             fis.read(fileContent);
-                            dataFile.addContent(new String(Base64.encodeBase64(fileContent))+"\n");
+                            dataFile.addContent(new String(Base64.encodeBase64Chunked(fileContent))+"\n");
+                            dataFile.removeAttribute("DigestType");
+                            dataFile.removeAttribute("DigestValue");
                             Attribute contentType = dataFile.getAttribute("ContentType");
                             contentType.setValue(DataFile.CONTENT_EMBEDDED_BASE64);//add also back attribute to embedded base.
                         }
