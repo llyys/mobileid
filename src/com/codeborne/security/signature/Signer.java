@@ -25,6 +25,7 @@ import javax.xml.rpc.holders.StringHolder;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.rmi.RemoteException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -220,6 +221,11 @@ public abstract class Signer {
         StringWriter sw = new StringWriter();
         xmlOutput.output(doc, sw);
         return sw.toString();
+    }
+
+    public static String guessFileMimeType(File file){
+        String mimeType= URLConnection.guessContentTypeFromName(file.getName());
+        return mimeType == null ? "application/octet-stream" : mimeType;
     }
 
 }

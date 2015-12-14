@@ -1,5 +1,6 @@
 package com.codeborne.security.digidoc.mapping;
 
+import com.codeborne.security.signature.Signer;
 import org.apache.commons.codec.binary.Base64;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -57,8 +58,7 @@ public class SignedDoc implements Serializable {
         e.setFilename(file.getName());
 
 
-        String mimeType= URLConnection.guessContentTypeFromName(file.getName());
-        e.setMimeType(mimeType == null ? "application/octet-stream" : mimeType);
+        e.setMimeType(Signer.guessFileMimeType(file));
 
         e.setSize(file.length());
 
@@ -77,6 +77,8 @@ public class SignedDoc implements Serializable {
         addDataFile(e);
         return e;
     }
+
+
 
     public static String encodeToBase64(byte[] fileContent) {
         String result= new String(Base64.encodeBase64(fileContent));
