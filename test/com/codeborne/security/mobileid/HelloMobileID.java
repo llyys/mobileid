@@ -20,7 +20,7 @@ public class HelloMobileID {
   public static void main(String[] args) throws MalformedURLException {
     System.setProperty("javax.net.ssl.trustStore", "test/keystore.jks");
     HelloMobileID app = new HelloMobileID();
-    app.mid = new MobileIDAuthenticator("https://www.openxades.org:8443/");
+    app.mid = new MobileIDAuthenticator("https://tsp.demo.sk.ee/");
     app.create();
   }
 
