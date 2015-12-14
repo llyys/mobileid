@@ -54,7 +54,7 @@ public class SignerIntegrationTests {
         SignatureSession session=null;
         try{
 
-            signer = new MobileIDSigner("https://www.openxades.org:9443/", "Testimine");
+            signer = new MobileIDSigner("https://tsp.demo.sk.ee/", "Testimine");
 
             List<File> files=new ArrayList<File>();
             files.add(testFile);
