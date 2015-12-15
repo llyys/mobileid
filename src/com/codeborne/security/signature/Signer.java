@@ -5,9 +5,13 @@ import com.codeborne.security.digidoc.DigiDocServicePortType;
 import com.codeborne.security.digidoc.DigiDocService_Service;
 import com.codeborne.security.digidoc.DigiDocService_ServiceLocator;
 import com.codeborne.security.digidoc.holders.SignedDocInfoHolder;
-import com.codeborne.security.digidoc.mapping.DataFile;
-import com.codeborne.security.digidoc.mapping.SignedDoc;
+//import com.codeborne.security.digidoc.mapping.DataFile;
+//import com.codeborne.security.digidoc.mapping.SignedDoc;
+import ee.sk.digidoc.DataFile;
+import ee.sk.digidoc.DigiDocException;
+import ee.sk.digidoc.SignedDoc;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jdom2.Attribute;
@@ -25,6 +29,7 @@ import javax.xml.rpc.holders.StringHolder;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.rmi.RemoteException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -60,8 +65,26 @@ public abstract class Signer {
      * As a result of the StartSession request also a created session identifier
      * is returned, what should be used in the headers of following requests.
      */
-    public SignatureSession startSession(List<File> files) throws Exception {
-        return startSession(files, false);
+//    public SignatureSession startSession(List<File> files) throws Exception {
+//        return startSession(files, false);
+//    }
+    public SignatureSession startSession(List<File> files, boolean compact) throws DigiDocException, IOException {
+        SignedDoc doc=new SignedDoc(SignedDoc.FORMAT_BDOC, SignedDoc.BDOC_VERSION_2_1);
+        StringHolder status = new StringHolder();
+        IntHolder sessionCode = new IntHolder();
+        SignedDocInfoHolder signedDocInfo=new SignedDocInfoHolder();
+
+        for (int i = 0; i < files.size(); i++) {
+            File file=files.get(i);
+            DataFile df=new DataFile("D"+i, DataFile.CONTENT_BINARY, file.getName(), guessFileType(file), doc);
+
+            byte[] bytes = FileUtils.readFileToByteArray(file);
+            df.setBody(Base64.encodeBase64Chunked(bytes));
+        }
+        SignatureSession session = new SignatureSession(sessionCode.value, signedDocInfo.value);
+        session.isCompact=false;
+        session.doc=doc;
+        return session;
     }
 
     /**
@@ -71,38 +94,28 @@ public abstract class Signer {
      * @return
      * @throws Exception
      */
-    public SignatureSession startSession(List<File> files, boolean compact) throws Exception {
+    public SignatureSession startSession( SignedDoc sDoc) throws Exception {
 
-        SignedDoc sDoc=new SignedDoc();
 
-        for (int i = 0; i < files.size(); i++) {
-            File f = files.get(i);
-            com.codeborne.security.digidoc.mapping.DataFile dataFile = sDoc.addEmbeddedFile(f);
-
-            if(compact)
-                dataFile.calculateHash();
-        }
 
         StringHolder status = new StringHolder();
         IntHolder sessionCode = new IntHolder();
         SignedDocInfoHolder signedDocInfo=new SignedDocInfoHolder();
 
         try {
-            String docXML = sDoc.toXml();
+            //String docXML = sDoc.toXml();
             //docXML=docXML.replaceAll("<", "&lt;").replaceAll(">", "&gt;"); //according to documentation there should be xml
-            service.startSession("", docXML, true, null, status, sessionCode, signedDocInfo);
+            ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+            sDoc.writeToStream(bytes);
+            service.startSession("", Base64.encodeBase64String(bytes.toByteArray()), true, null, status, sessionCode, signedDocInfo);
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
-
         } catch (RemoteException e) {
-
-            throw new AuthenticationException(e);
-        } catch (JAXBException e) {
-            throw new Exception(e);
+           throw new AuthenticationException(e);
         }
         SignatureSession session = new SignatureSession(sessionCode.value, signedDocInfo.value);
-        session.isCompact=compact;
-        session.files=files;
+        session.isCompact=false;
+        session.doc=sDoc;
         return session;
 
     }
@@ -220,6 +233,11 @@ public abstract class Signer {
         StringWriter sw = new StringWriter();
         xmlOutput.output(doc, sw);
         return sw.toString();
+    }
+
+    public static String guessFileType(File file){
+        String mimeType= URLConnection.guessContentTypeFromName(file.getName());
+        return mimeType == null ? "application/octet-stream" : mimeType;
     }
 
 }

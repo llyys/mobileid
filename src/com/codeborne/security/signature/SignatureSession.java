@@ -1,6 +1,7 @@
 package com.codeborne.security.signature;
 
 import com.codeborne.security.digidoc.SignedDocInfo;
+import ee.sk.digidoc.SignedDoc;
 
 import java.io.File;
 import java.io.Serializable;
@@ -15,6 +16,7 @@ public class SignatureSession implements Serializable {
     public String signatureId;
     public boolean isCompact;
     public List<File> files;
+    public SignedDoc doc;
 
     public SignatureSession(int sessCode, SignedDocInfo value) {
         this.sessCode = sessCode;
