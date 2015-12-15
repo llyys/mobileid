@@ -6,6 +6,7 @@ import com.codeborne.security.signature.MobileIDSigner;
 import com.codeborne.security.signature.SignatureSession;
 import com.codeborne.security.signature.Signer;
 import com.codeborne.security.signature.SmartcardSigner;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.JDOMException;
@@ -15,6 +16,7 @@ import org.junit.Test;
 import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,7 @@ import static org.junit.Assert.*;
  */
 public class SignerIntegrationTests {
     String path = SignerIntegrationTests.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+    public static String digidocServiceURL = "https://tsp.demo.sk.ee/";
     boolean hasRequiredFiles=true;
     @Before
     public void setUp(){
@@ -54,7 +57,7 @@ public class SignerIntegrationTests {
         SignatureSession session=null;
         try{
 
-            signer = new MobileIDSigner("https://tsp.demo.sk.ee/", "Testimine");
+            signer = new MobileIDSigner(digidocServiceURL, "Testimine");
 
             List<File> files=new ArrayList<File>();
             files.add(testFile);
@@ -62,9 +65,20 @@ public class SignerIntegrationTests {
 
             signer.mobileSign(session, properties.getProperty("personalcode"), properties.getProperty("mobileno"), "Testimine", 0, true, true );
             if(signer.waitForSigning(session)){
-                signer.getSignedDoc(session);
+                String base64result = signer.getSignedDoc(session);
+                File resultFile = new File(path, "Result.txt");
+                FileUtils.writeByteArrayToFile(resultFile, Base64.decodeBase64(base64result));
             }
-        }finally {
+        }
+        catch (RuntimeException e){
+            e.printStackTrace();
+            assertFalse("Internal exception occured", true);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            assertFalse("Internal exception occured", true);
+        }
+        finally {
             signer.closeSession(session);
         }
     }
@@ -87,7 +101,8 @@ public class SignerIntegrationTests {
         SignatureSession session=null;
         try{
 
-            signer = new SmartcardSigner("https://www.openxades.org:9443/", "Testimine");
+
+            signer = new SmartcardSigner(digidocServiceURL, "Testimine");
 
             List<File> files=new ArrayList<File>();
             files.add(testFile);

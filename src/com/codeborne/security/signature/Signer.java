@@ -10,6 +10,8 @@ import com.codeborne.security.digidoc.mapping.SignedDoc;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.digidoc4j.Container;
+import org.digidoc4j.ContainerBuilder;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -72,40 +74,48 @@ public abstract class Signer {
      * @return
      * @throws Exception
      */
-    public SignatureSession startSession(List<File> files, boolean compact) throws Exception {
+    public SignatureSession startSession(List<File> files, boolean compact) throws RemoteException {
 
-        SignedDoc sDoc=new SignedDoc();
+    try{
+
+
+        ContainerBuilder containerBuilder =
+                ContainerBuilder.aContainer();
+
 
         for (int i = 0; i < files.size(); i++) {
             File f = files.get(i);
-            com.codeborne.security.digidoc.mapping.DataFile dataFile = sDoc.addEmbeddedFile(f);
+            containerBuilder.withDataFile(f, Signer.guessFileMimeType(f));
 
-            if(compact)
-                dataFile.calculateHash();
         }
+
+
 
         StringHolder status = new StringHolder();
         IntHolder sessionCode = new IntHolder();
         SignedDocInfoHolder signedDocInfo=new SignedDocInfoHolder();
 
         try {
-            String docXML = sDoc.toXml();
+            Container container = containerBuilder.build();
+            String docBase64 = Base64.encodeBase64String(IOUtils.toByteArray(container.saveAsStream()));
             //docXML=docXML.replaceAll("<", "&lt;").replaceAll(">", "&gt;"); //according to documentation there should be xml
-            service.startSession("", docXML, true, null, status, sessionCode, signedDocInfo);
+            service.startSession("", docBase64, true, null, status, sessionCode, signedDocInfo);
             if (!"OK".equals(status.value))
                 throw new AuthenticationException(valueOf(status.value));
 
         } catch (RemoteException e) {
-
             throw new AuthenticationException(e);
-        } catch (JAXBException e) {
-            throw new Exception(e);
+        } catch (IOException e) {
+            throw new RemoteException("Unable to parse created container as Base64Stream",e);
         }
         SignatureSession session = new SignatureSession(sessionCode.value, signedDocInfo.value);
         session.isCompact=compact;
         session.files=files;
         return session;
-
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
